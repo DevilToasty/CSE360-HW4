@@ -10,6 +10,7 @@ Additional testing and validation
 You will find source code, documentation, screencasts, and test files demonstrating the new features and the overall progress since Phase 1.
 
 Repository Contents
+
 **1. Source Code**
 Location: src/ directory (organized into packages such as application, databasePart1, etc.).
 

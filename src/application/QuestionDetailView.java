@@ -10,6 +10,8 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 
 public class QuestionDetailView {
+	
+    private Runnable onBack; // allows the discussion page to refresh at close
 
     private Scene scene;
     private Question question;
@@ -21,11 +23,12 @@ public class QuestionDetailView {
     private VBox answersContainer;    
     private VBox questionReplyContainer;  
 
-    public QuestionDetailView(Question question, QuestionManager questionManager, DatabaseHelper databaseHelper, User currentUser) {
+    public QuestionDetailView(Question question, QuestionManager questionManager, DatabaseHelper databaseHelper, User currentUser, Runnable onBack) {
         this.question = question;
         this.questionManager = questionManager;
         this.databaseHelper = databaseHelper;
         this.currentUser = currentUser;
+        this.onBack = onBack;
     }
     
     public void show(CustomTrackedStage primaryStage) {
@@ -36,6 +39,14 @@ public class QuestionDetailView {
         header.setPadding(new Insets(10));
 
         Button backButton = BackButton.createBackButton(primaryStage);
+        
+        backButton.setOnAction(e ->{
+        	if (onBack != null) {
+                onBack.run();
+            }
+            primaryStage.goBack();
+        });
+        
         Label titleLabel = new Label(question.getTitle());
         titleLabel.setStyle("-fx-font-size: 24px; -fx-font-weight: bold;");
         header.getChildren().addAll(backButton, titleLabel);

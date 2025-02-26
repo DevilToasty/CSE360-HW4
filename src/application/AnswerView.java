@@ -151,22 +151,20 @@ public class AnswerView extends VBox {
         editContainer.setSpacing(5);
         errorLabel = new Label();
         errorLabel.setStyle("-fx-text-fill: red; -fx-font-size: 12px;");
-//        Button editButton = new Button("Change Answer Text");
-//        editButton.setOnAction(e -> {
-//            if (currentUser.getUserName().equals(answer.getAuthor())) {
-//                toggleEditBox();
-//            } else {
-//                errorLabel.setText("You aren't the user who posted this answer.");
-//            }
-//        });
 
         nestedRepliesContainer = new VBox();
         nestedRepliesContainer.setSpacing(5);
         nestedRepliesContainer.setPadding(new Insets(10, 0, 0, 20));
 
-        getChildren().addAll(header, answerLabel, seeMoreButton, replyButton, replyContainer, 
-//        		editButton, 
-        		errorLabel, editContainer, nestedRepliesContainer);
+        getChildren().addAll(
+        		header, 
+        		answerLabel, 
+        		seeMoreButton, 
+        		replyButton, 
+        		replyContainer, 
+        		errorLabel, 
+        		editContainer, 
+        		nestedRepliesContainer);
 
         loadNestedReplies();
     }
@@ -254,7 +252,6 @@ public class AnswerView extends VBox {
             editContainer.getChildren().clear();
         }
     }
-
 
     // loads nested replies for this answer (broken rn)
     private void loadNestedReplies() {

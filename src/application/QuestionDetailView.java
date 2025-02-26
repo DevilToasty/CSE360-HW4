@@ -124,7 +124,13 @@ public class QuestionDetailView {
 	        deleteItem.setOnAction(e -> {
 	            boolean success = questionManager.deleteQuestion(question.getId());
 	            if (success) {
-	                refreshContent();
+	            	System.out.println();
+	                if (onBack != null) {
+	                    onBack.run(); // refresh discussion view
+	                }
+	                primaryStage.goBack(); // navigate back to discussion page
+	            } else {
+	                errorLabel.setText("Error deleting question.");
 	            }
 	        });
 	       

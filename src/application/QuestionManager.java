@@ -72,11 +72,31 @@ public class QuestionManager {
     public boolean deleteQuestion(UUID questionId) {
         Question q = findQuestionById(questionId);
         if (q != null) {
+            List<Answer> answersToDelete = new ArrayList<>(q.getAnswers());
+            for (Answer a : answersToDelete) {
+                // delete the answer from the database.
+                boolean answerDeleted = databaseHelper.deleteAnswer(a.getId());
+                if (!answerDeleted) {
+                    // if any answer fails to delete, return false.
+                    System.err.println("Error deleting answer with ID: " + a.getId());
+                    return false;
+                }
+                // remove the answer from the question and the global list
+                q.removeAnswer(a);
+                answers.remove(a);
+            }
+            
             questions.remove(q);
-            return databaseHelper.deleteQuestion(questionId);
+            
+            boolean questionDeleted = databaseHelper.deleteQuestion(questionId);
+            if (!questionDeleted) {
+                System.err.println("Error deleting question with ID: " + questionId);
+            }
+            return questionDeleted;
         }
         return false;
     }
+
     
     public boolean deleteAnswer(UUID answerId) {
         for (Question q : questions) {

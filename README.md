@@ -19,8 +19,11 @@ Description: Contains all updated Java files for the application, including:
 **Key Files:** 
 
 DiscussionView.java – New class for displaying and filtering questions with checkboxes and a search bar.
+
 QuestionManager.java – Extended functionality for creating, searching, and updating questions and answers.
+
 DatabaseHelper.java – Updated with additional methods for question and answer retrieval, ensuring smooth data operations.
+
 Existing Phase 1 Classes – All original files from Phase 1, such as UserLoginPage.java, StudentHomePage.java, AdminHomePage.java, etc., have been enhanced to support new features (e.g., UI improvements, updated navigation).
 
 **Key Updates in Phase 2:**

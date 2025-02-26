@@ -4,12 +4,7 @@ import javafx.scene.control.Button;
 
 public class BackButton {
 
-    /**
-     * Creates a back button with pre-defined style and action to go back to the previous page.
-     *
-     * @param primaryStage The CustomTrackedStage instance to handle navigation.
-     * @return A fully configured back button.
-     */
+    //  back button with pre-defined style and action to go back to the previous page
     public static Button createBackButton(CustomTrackedStage primaryStage) {
         Button backButton = new Button("<-- Back");
         

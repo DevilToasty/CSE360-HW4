@@ -150,6 +150,7 @@ public class DiscussionView {
                     matches = false;
                 }
             }
+            
             // filter by My Questions
             if (myQuestionsCheckbox.isSelected() && !q.getAuthor().equals(currentUser.getUserName())) {
                 matches = false;

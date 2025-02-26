@@ -35,6 +35,11 @@ public class StudentHomePage {
         BorderPane.setMargin(backButton, new Insets(10));
         BorderPane.setAlignment(backButton, Pos.TOP_LEFT);
         borderPane.setTop(backButton);
+        
+        Button discussionButton = new Button("View Discussion");
+		discussionButton.setOnAction(a -> {
+		       new DiscussionView(databaseHelper, questionManager, currentUser).show(primaryStage);     
+		});
 
         VBox centerBox = new VBox(15);
         centerBox.setPadding(new Insets(20));
@@ -160,6 +165,7 @@ public class StudentHomePage {
         searchResultsListView.setStyle("-fx-background-color: #fff; -fx-border-color: #ccc;");
 
         centerBox.getChildren().addAll(
+        	discussionButton,
             greetingLabel,
             questionInput,
             submitQuestionButton,

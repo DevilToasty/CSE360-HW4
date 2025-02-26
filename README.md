@@ -1,37 +1,48 @@
-<<<<<<< HEAD
-# CSE360-HW2
+# Team Project Phase 2: README
 =======
-README File for Team Project Phase 1
 Overview
-This repository contains all the files and deliverables required for Team Project Phase 1, including source code, documentation, screencasts, and automated tests. Below is a detailed list of items in the repository and instructions on how to access and use them.
+This repository contains all files and deliverables for Team Project Phase 2, building upon our Phase 1 and HW2 implementation. The primary focus of Phase 2 is extending and refining our question-and-answer functionality to include:
+
+Advanced searching of questions and answers
+Enhanced UI and discussion views
+Updated CRUD operations for questions and answers
+Additional testing and validation
+You will find source code, documentation, screencasts, and test files demonstrating the new features and the overall progress since Phase 1.
 
 Repository Contents
-1. Source Code
-Location: src/ then application 
+**1. Source Code**
+Location: src/ directory (organized into packages such as application, databasePart1, etc.).
 
-Description: Contains all Java source files for the application. These files include core functionality such as user login, admin functionalities, OTP validation, and role-based redirects.
+Description: Contains all updated Java files for the application, including:
 
-Key Files:
+**Key Files:** 
 
-AdminUserManager.java – Manages admin-specific functions like user deletion and account updates.
-PasswordRecognizer.java – Validates passwords based on defined criteria.
-UserNameRecognizer.java – Ensures usernames meet the required format and rules.
-StartCSE360.java – The main entry point to start the application.
-Additional files for user roles: AdminSetupPage.java, StudentHomePage.java, InstructorHomePage.java, ReviewerHomePage.java, StaffHomePage.java.
+DiscussionView.java – New class for displaying and filtering questions with checkboxes and a search bar.
+QuestionManager.java – Extended functionality for creating, searching, and updating questions and answers.
+DatabaseHelper.java – Updated with additional methods for question and answer retrieval, ensuring smooth data operations.
+Existing Phase 1 Classes – All original files from Phase 1, such as UserLoginPage.java, StudentHomePage.java, AdminHomePage.java, etc., have been enhanced to support new features (e.g., UI improvements, updated navigation).
 
-2. Screencasts
-Location: Screencasts_Scrum_Meetings/ in the main branch
+**Key Updates in Phase 2:**
 
-Description: Contains video recordings demonstrating the functional requirements, architecture design, and team standup meetings.
+Search Bar Implementation – Allows users to filter questions and answers by keyword.
+Enhanced CRUD Operations – Users can now update questions or answers more easily.
+Discussion View – A centralized page for viewing, creating, and filtering discussions.
 
-3. Database Info
+**2. Screencasts**
+Location: Screencasts_Scrum_Meetings/ directory (or similarly named folder).
+
+Description: Includes video recordings demonstrating:
+
+1. New Functionalities – Searching, updating questions/answers, and discussion features.
+2. Automated Tests – Evidence of test execution and console output.
+3. Standup Meetings – Summaries of team progress, next steps, and any issues faced.
+
+
+**3. Database Info**
    If the data is not reset the info would stay the same but if the data is not reset the data will be like
 
-   Admin
-   Username: group43
-   Password: 4321Abcd$
+Default Admin Credentials:
 
-   User
-   Username: steve1
-   Password: Abcd1234$
->>>>>>> 6279184 (Initial commit of CSE360-Group-43-main)
+Username: Group43
+Password: Abcd123$
+

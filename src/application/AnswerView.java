@@ -11,7 +11,6 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
-
 import java.util.List;
 
 public class AnswerView extends VBox {
@@ -25,7 +24,9 @@ public class AnswerView extends VBox {
     private Button seeMoreButton;
     private boolean expanded = false;
     private VBox replyContainer;
+    private VBox editContainer;
     private VBox nestedRepliesContainer;
+    private Label errorLabel; // for showing errors in editing
 
     private Runnable refreshCallback; // callback to refresh the full view
 
@@ -46,12 +47,10 @@ public class AnswerView extends VBox {
 
         HBox header = new HBox(10);
         header.setAlignment(Pos.CENTER_LEFT);
-        
-        // author box with checkmark (if approved) and author label
+
+        // author box with checkmark
         HBox authorBox = new HBox(5);
         authorBox.setAlignment(Pos.CENTER);
-       
-        // only add the checkmark if the answer is approved (for top-level answers)
         if (question.hasApprovedAnswer() && (answer.getParentAnswerId() == null)) {
             for (Answer approvedAnswer : question.getApprovedSolutions()) {
                 if (approvedAnswer.getId().equals(answer.getId())) {
@@ -59,7 +58,7 @@ public class AnswerView extends VBox {
                     checkmarkLabel.setStyle(
                         "-fx-background-color: green; " +
                         "-fx-text-fill: white; " +
-                        "-fx-font-size: 10px; " +
+                        "-fx-font-size: 14px; " +
                         "-fx-min-width: 16px; " +
                         "-fx-min-height: 16px; " +
                         "-fx-alignment: center; " +
@@ -70,57 +69,73 @@ public class AnswerView extends VBox {
                 }
             }
         }
-        
         Label authorLabel = new Label("By: " + answer.getAuthor());
         authorLabel.setStyle("-fx-font-weight: bold;");
         authorBox.getChildren().add(authorLabel);
         header.getChildren().add(authorBox);
-        
-        // if the current user is the question author, add the options menu button
-        if (currentUser.getUserName().equals(question.getAuthor())) {
-            Region spacer = new Region();
-            HBox.setHgrow(spacer, Priority.ALWAYS);
-            header.getChildren().add(spacer);
-            
-            Button optionsButton = new Button("⋮");  // unicode dots
-            optionsButton.setStyle("-fx-background-color: transparent; -fx-font-size: 14px;");
-            
-            ContextMenu contextMenu = new ContextMenu();
-            MenuItem toggleApprove = new MenuItem(answer.isApprovedSolution() ? "Unapprove" : "Approve");
-            toggleApprove.setOnAction(e -> {
-                if (answer.isApprovedSolution()) {
-                    questionManager.unmarkAnswerAsSolution(question, answer);
-                } else {
-                    questionManager.markAnswerAsSolution(question, answer);
-                }
-                
-                // refresh the question so it updates then refresh the full view
-                questionManager.refreshQuestion(question);
-                if (refreshCallback != null) {
-                    refreshCallback.run();
-                }
-            });
 
-            MenuItem deleteItem = new MenuItem("Delete Answer");
-            deleteItem.setOnAction(e -> {
-                // delete the answer and refresh the view.
-                boolean success = questionManager.deleteAnswer(answer.getId());
-                if (success && refreshCallback != null) {
-                    refreshCallback.run();
-                }
-            });
-            contextMenu.getItems().addAll(toggleApprove, deleteItem);
-            optionsButton.setOnAction(e -> {
-                contextMenu.show(optionsButton, Side.BOTTOM, 0, 0);
-            });
-            header.getChildren().add(optionsButton);
+        // if the current user is the question author, add an options menu.
+      
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+        header.getChildren().add(spacer);
+
+        Button optionsButton = new Button("\u22EE");  // unicode ellipsis
+        optionsButton.setStyle("-fx-background-color: transparent; -fx-font-size: 14px;");
+
+        ContextMenu contextMenu = new ContextMenu();
+        
+        // check permissions
+        if (currentUser.getUserName().equals(question.getAuthor())) {
+	        MenuItem toggleApprove = new MenuItem(answer.isApprovedSolution() ? "Unapprove" : "Approve");
+	        toggleApprove.setOnAction(e -> {
+	            if (answer.isApprovedSolution()) {
+	                questionManager.unmarkAnswerAsSolution(question, answer);
+	            } else {
+	                questionManager.markAnswerAsSolution(question, answer);
+	            }
+	            questionManager.refreshQuestion(question);
+	            if (refreshCallback != null) {
+	                refreshCallback.run();
+	            }
+	        });
+	        contextMenu.getItems().add(toggleApprove);
+	        
+	        MenuItem editAnswer = new MenuItem("Edit Question");
+	        editAnswer.setOnAction(e -> {
+	        	if (currentUser.getUserName().equals(answer.getAuthor())) {
+	                toggleEditBox();
+	            } else {
+	                errorLabel.setText("You aren't the user who posted this answer.");
+	            }
+	        });
+	        contextMenu.getItems().add(editAnswer);
+	        
+	        MenuItem deleteItem = new MenuItem("Delete Answer");
+	        deleteItem.setOnAction(e -> {
+	            boolean success = questionManager.deleteAnswer(answer.getId());
+	            if (success && refreshCallback != null) {
+	                refreshCallback.run();
+	            }
+	        });
+	        contextMenu.getItems().add(deleteItem);
         }
         
-        // answer text label.
+        MenuItem reportItem = new MenuItem("Report");
+        reportItem.setOnAction(e -> {
+            // to do
+        });
+        
+        contextMenu.getItems().add(reportItem);
+        
+        optionsButton.setOnAction(e -> {
+            contextMenu.show(optionsButton, Side.BOTTOM, 0, 0);
+        });
+        header.getChildren().add(optionsButton);
+
         answerLabel = new Label(getSnippet(answer.getAnswerText(), 40));
         answerLabel.setWrapText(true);
 
-        // “See more” button if the answer text is longer than the snippet
         seeMoreButton = new Button("See more");
         if (answer.getAnswerText().split("\\s+").length <= 40) {
             seeMoreButton.setVisible(false);
@@ -129,19 +144,34 @@ public class AnswerView extends VBox {
 
         Button replyButton = new Button("Reply");
         replyButton.setOnAction(e -> toggleReplyBox());
-
         replyContainer = new VBox();
         replyContainer.setSpacing(5);
 
+        editContainer = new VBox();
+        editContainer.setSpacing(5);
+        errorLabel = new Label();
+        errorLabel.setStyle("-fx-text-fill: red; -fx-font-size: 12px;");
+//        Button editButton = new Button("Change Answer Text");
+//        editButton.setOnAction(e -> {
+//            if (currentUser.getUserName().equals(answer.getAuthor())) {
+//                toggleEditBox();
+//            } else {
+//                errorLabel.setText("You aren't the user who posted this answer.");
+//            }
+//        });
+
         nestedRepliesContainer = new VBox();
         nestedRepliesContainer.setSpacing(5);
-        nestedRepliesContainer.setPadding(new Insets(10, 0, 0, 20)); // indent nested replies (currently broken)
+        nestedRepliesContainer.setPadding(new Insets(10, 0, 0, 20));
 
-        getChildren().addAll(header, answerLabel, seeMoreButton, replyButton, replyContainer, nestedRepliesContainer);
+        getChildren().addAll(header, answerLabel, seeMoreButton, replyButton, replyContainer, 
+//        		editButton, 
+        		errorLabel, editContainer, nestedRepliesContainer);
 
         loadNestedReplies();
     }
 
+    // returns a snippet
     private String getSnippet(String fullText, int maxWords) {
         if (fullText == null || fullText.isEmpty()) return "";
         String[] words = fullText.split("\\s+");
@@ -156,7 +186,7 @@ public class AnswerView extends VBox {
         return sb.toString().trim();
     }
 
-    // expands box to show more text
+    // toggle between expanded and collapsed view
     private void toggleExpanded() {
         if (expanded) {
             answerLabel.setText(getSnippet(answer.getAnswerText(), 40));
@@ -169,18 +199,22 @@ public class AnswerView extends VBox {
         }
     }
 
-    // if user clicks the reply box
+    // toggles the reply box
     private void toggleReplyBox() {
         if (replyContainer.getChildren().isEmpty()) {
             ReplyBox replyBox = new ReplyBox(text -> {
                 try {
+                    // create a new answer as a reply (nested reply) to this answer
                     Answer newAnswer = new Answer(text, currentUser.getUserName(), answer.getId());
-                    question.addAnswer(newAnswer);
+                    question.getAnswers().add(newAnswer);
                     questionManager.createAnswer(currentUser.getUserName(), text, question);
+                    replyContainer.getChildren().clear();
+                    nestedRepliesContainer.getChildren().clear();
+                    loadNestedReplies();
                     if (refreshCallback != null) {
                         refreshCallback.run();
                     }
-                } catch(Exception ex) {
+                } catch (Exception ex) {
                     ex.printStackTrace();
                 }
             });
@@ -190,7 +224,39 @@ public class AnswerView extends VBox {
         }
     }
 
-    // broken rn
+    // toggles the edit box for modifying this answer
+    private void toggleEditBox() {
+        if (editContainer.getChildren().isEmpty()) {
+            EditAnswerBox editBox = new EditAnswerBox(text -> {
+                try {
+                    // update the answer text
+                    questionManager.updateAnswerText(answer, text);
+
+                    // update the UI
+                    if (!expanded) {
+                        answerLabel.setText(getSnippet(answer.getAnswerText(), 40));
+                    } else {
+                        answerLabel.setText(answer.getAnswerText());
+                    }
+                    
+                    editContainer.getChildren().clear();
+                    nestedRepliesContainer.getChildren().clear();
+                    loadNestedReplies();
+                    if (refreshCallback != null) {
+                        refreshCallback.run();
+                    }
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            });
+            editContainer.getChildren().add(editBox);
+        } else {
+            editContainer.getChildren().clear();
+        }
+    }
+
+
+    // loads nested replies for this answer (broken rn)
     private void loadNestedReplies() {
         nestedRepliesContainer.getChildren().clear();
         for (Answer a : allAnswers) {

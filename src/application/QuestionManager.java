@@ -52,6 +52,11 @@ public class QuestionManager {
         databaseHelper.insertAnswer(a, question.getId());
     }
     
+    public void editQuestiontext(Question question, String newText) {
+    	question.updateQuestionText(newText);
+    	databaseHelper.updateQuestion(question);
+    }
+    
     public void markAnswerAsSolution(Question question, Answer answer) {
         question.markAnswerAsSolution(answer);
         databaseHelper.updateAnswer(answer);
@@ -217,6 +222,11 @@ public class QuestionManager {
     public void updateQuestionText(Question question, String newText) {
         question.updateQuestionText(newText);
         databaseHelper.updateQuestion(question);
+    }
+    
+    public void updateAnswerText(Answer answer, String newText) {
+        answer.updateAnswerText(newText);
+        databaseHelper.updateAnswer(answer); 
     }
     
     private boolean isValidQuestionText(String text) {

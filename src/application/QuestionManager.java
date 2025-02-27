@@ -250,6 +250,7 @@ public class QuestionManager {
     }
     
     private boolean isValidQuestionText(String text) {
+    	if (text == null) return false;
         int wordCount = text.trim().split("\\s+").length;
         return wordCount >= 10 && wordCount <= 300;
     }

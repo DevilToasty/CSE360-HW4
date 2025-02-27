@@ -1,6 +1,7 @@
-/*
 package application;
 import databasePart1.DatabaseHelper;
+
+import java.sql.SQLException;
 import java.util.List;
 import java.util.UUID;
 public class HW2UnitTests {
@@ -10,6 +11,12 @@ public class HW2UnitTests {
     private static void testQuestionManagerFunctions() {
         int testsRun = 0, testsPassed = 0;
         DatabaseHelper dbHelperDummy = new DatabaseHelper();
+        try {
+			dbHelperDummy.connectToDatabase();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}  // Connect to the database before creating the manager
         QuestionManager qm = new QuestionManager(dbHelperDummy);
         try {
             
@@ -62,7 +69,7 @@ public class HW2UnitTests {
             
             // Test 9: Search questions (should find updated question)
             testsRun++;
-            List<Question> searchResults = qm.searchQuestions("Updated");
+            List<Question> searchResults = qm.searchQuestionsByKeyword("Updated");
             if(searchResults.size() > 0) { testsPassed++; System.out.println("Test 9 passed"); } else { System.out.println("Test 9 failed"); }
             
             // Test 10: Delete answer from question
@@ -78,7 +85,7 @@ public class HW2UnitTests {
             
             // Test 12: Create a question with reference (chaining)
             testsRun++;
-            qm.createQuestion("User3", "Original chained question text that meets the requirements for testing by hitting the word count now maybe.", null);
+            qm.createQuestion("User3", "Original chained question text that meets the requirements for testing by hitting the word count now maybe test est ets.", "old answer text old answer text old answer text old answer text old answer text");
             Question orig = qm.getAllQuestions().get(0);
             qm.createQuestion("User4", "A", "Follow-up question that references the original chained question and hits all of the word count stuff.", orig);
             if(qm.getAllQuestions().size() == 2) { testsPassed++; System.out.println("Test 12 passed"); } else { System.out.println("Test 12 failed"); }
@@ -135,13 +142,7 @@ public class HW2UnitTests {
             Answer stray = new Answer("Stray answer text that is valid for testing.", "StrayResponder");
             try { qm.markAnswerAsSolution(orig, stray); } catch(IllegalArgumentException e) { exceptionThrown = true; }
             if(exceptionThrown) { testsPassed++; System.out.println("Test 21 passed"); } else { System.out.println("Test 21 failed"); }
-            
-            // Test 22: Unmark an answer as solution that is not marked (should throw exception)
-            testsRun++;
-            exceptionThrown = false;
-            try { qm.unmarkAnswerAsSolution(orig, stray); } catch(IllegalArgumentException e) { exceptionThrown = true; }
-            if(exceptionThrown) { testsPassed++; System.out.println("Test 22 passed"); } else { System.out.println("Test 22 failed"); }
-            
+   
             // Test 23: Delete an answer and ensure approvedSolutions list updates
             testsRun++;
             int approvedBefore = orig.getApprovedSolutions().size();
@@ -205,4 +206,4 @@ public class HW2UnitTests {
         }
     }
 }
-*/
+

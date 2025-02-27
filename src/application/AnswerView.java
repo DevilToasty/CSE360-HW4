@@ -101,7 +101,7 @@ public class AnswerView extends VBox {
 	        });
 	        contextMenu.getItems().add(toggleApprove);
 	        
-	        MenuItem editAnswer = new MenuItem("Edit Question");
+	        MenuItem editAnswer = new MenuItem("Edit Answer");
 	        editAnswer.setOnAction(e -> {
 	        	if (currentUser.getUserName().equals(answer.getAuthor())) {
 	                toggleEditBox();

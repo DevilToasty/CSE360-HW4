@@ -157,6 +157,8 @@ public class DiscussionView {
             }
             
             // apply search filter if text is entered
+            
+            // FAISAL CODE
             if (!searchText.isEmpty()) {
                 String title = q.getTitle().toLowerCase();
                 String questionText = q.getQuestionText().toLowerCase();

@@ -99,7 +99,10 @@ public class QuestionDetailView {
         
         // if the current user is the question author, add an options button.
         if (currentUser.getUserName().equals(question.getAuthor())) {
-	        MenuItem editQuestion = new MenuItem("Edit Question");
+	        
+        	
+        	// JASON EDIT FUNCTION //
+        	MenuItem editQuestion = new MenuItem("Edit Question");
 	        editQuestion.setOnAction(e -> {
 	        	if (currentUser.getUserName().equals(question.getAuthor())) {
 	                if (editQuestionContainer.getChildren().isEmpty()) {

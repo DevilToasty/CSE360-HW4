@@ -14,7 +14,6 @@ public class HW2UnitTests {
         try {
 			dbHelperDummy.connectToDatabase();
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}  // Connect to the database before creating the manager
         QuestionManager qm = new QuestionManager(dbHelperDummy);

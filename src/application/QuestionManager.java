@@ -147,6 +147,17 @@ public class QuestionManager {
         return matching;
     }
     
+    // returns all answers
+    public List<Answer> getAnswers() {
+        List<Answer> aList = new ArrayList<>();
+        for (Question q : questions) {
+            for (Answer a : q.getAnswers()) {
+                    aList.add(a);
+            }
+        }
+        return aList;
+    }
+    
     public List<Answer> getAllApprovedSolutions() {
         List<Answer> approved = new ArrayList<>();
         for (Question q : questions) {

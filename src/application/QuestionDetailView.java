@@ -28,9 +28,7 @@ public class QuestionDetailView {
     private VBox answersContainer;    
     private VBox editQuestionContainer;
     private VBox questionReplyContainer;  
-    
-    private CustomTrackedStage primaryStage;
-    
+        
     private Label fullTextLabel;
     private Label errorLabel;
     
@@ -48,12 +46,11 @@ public class QuestionDetailView {
     }
     
     public void show(CustomTrackedStage primaryStage) {
-        this.primaryStage = primaryStage;
         
         BorderPane root = new BorderPane();
         root.setPadding(new Insets(20));
        
-        // Create header as a VBox containing an HBox for the top row.
+        // create header as a VBox containing an HBox for the top row
         VBox header = new VBox(10);
         header.setPadding(new Insets(10));
         

@@ -587,21 +587,23 @@ public class DatabaseHelper {
     
     // updates question in database
     public boolean updateQuestion(Question q) {
+    	// creates a query to securely retrieve information from the database where the parameters match 
         String query = "UPDATE Questions SET author = ?, questionTitle = ?, questionText = ?, referencedQuestionId = ?, timestamp = ?, resolved = ? WHERE id = ?";
+        // user preparedStatement with query to safely check information
         try (PreparedStatement pstmt = connection.prepareStatement(query)) {
-            pstmt.setString(1, sanitize(q.getAuthor()));
+            pstmt.setString(1, sanitize(q.getAuthor())); // sanitizing the inputs (trims, etc.)
             pstmt.setString(2, sanitize(q.getTitle()));
             pstmt.setString(3, sanitize(q.getQuestionText()));
-            if(q.getReferencedQuestion() != null) {
-                pstmt.setObject(4, q.getReferencedQuestion().getId());
+            if(q.getReferencedQuestion() != null) { // conditionally check if a reference exists
+                pstmt.setObject(4, q.getReferencedQuestion().getId()); // set reference
             } else {
-                pstmt.setObject(4, null);
+                pstmt.setObject(4, null); // else set null
             }
-            pstmt.setTimestamp(5, Timestamp.valueOf(q.getTimestamp()));
+            pstmt.setTimestamp(5, Timestamp.valueOf(q.getTimestamp())); // retrieve other parameters
             pstmt.setBoolean(6, q.isResolved());
             pstmt.setObject(7, q.getId());
             int rows = pstmt.executeUpdate();
-            return rows > 0;
+            return rows > 0; // if changes were updated rows is > 0
         } catch (SQLException e) {
             e.printStackTrace();
         }

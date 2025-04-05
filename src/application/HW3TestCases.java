@@ -6,7 +6,7 @@ import java.util.List;
 /**
  * The HW3TestCases class contains test cases that verify 
  * the functionalities of updating, retrieving, and deleting questions and answers 
- * within the database. The test cases ensure that changes made to the objects 
+ * within the database. Test cases ensure that changes made to the objects 
  * are consistently reflected in the database, preserving data continuity.
  * 
  * The test cases included are:
@@ -33,11 +33,11 @@ public class HW3TestCases {
     }
 
     /**
-     * Runs a series of test cases that verify the functionalities of question and answer management
-     * using the DatabaseHelper class.
+     * Runs test cases that verify the functionalities of question and answer management
+     * using the DatabaseHelper class and the QuestionManager class
      * 
-     * Each test case increments counters for tests run and tests passed, and outputs the result 
-     * to the console. In the event of an exception, the error is printed and the test execution continues.
+     * Each test case increments counters for tests run and tests passed, and outputs the result.
+     * In the event of an exception, the error is printed and the test execution continues.
      */
     private static void testQuestionManagerFunctions() {
         int testsRun = 0, testsPassed = 0;
@@ -47,6 +47,7 @@ public class HW3TestCases {
             // Instantiate a new DatabaseHelper for running test cases.
             DatabaseHelper dbHelper = new DatabaseHelper();
             dbHelper.connectToDatabase();
+            // Instantiate a new QUestionManager for running test cases.
             QuestionManager qManager = new QuestionManager(dbHelper);
 
             // Create a Question and Answer for testing purposes.

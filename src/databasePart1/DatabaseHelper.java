@@ -8,7 +8,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import application.Answer;
+import application.PrivateFeedback;
+import application.PrivateMessage;
 import application.Question;
+import application.Review;
+import application.ReviewerRequest;
 import application.User;
 
 public class DatabaseHelper {
@@ -25,7 +29,7 @@ public class DatabaseHelper {
     }
     
     public void connectToDatabase() throws SQLException {
-		try {
+		try { 
 			Class.forName(JDBC_DRIVER); // Load the JDBC driver
 			System.out.println("Connecting to database...");
 			connection = DriverManager.getConnection(DB_URL, USER, PASS);
@@ -41,45 +45,43 @@ public class DatabaseHelper {
     
     private void createTables() throws SQLException {
         String userTable = "CREATE TABLE IF NOT EXISTS cse360users ("
-            + "id INT AUTO_INCREMENT PRIMARY KEY, "
-            + "userName VARCHAR(255) UNIQUE, "
-            + "password VARCHAR(255), "
-            + "email VARCHAR(255), "
-            + "name VARCHAR(255), "
-            + "roles VARCHAR(255), "
-            + "CONSTRAINT unique_email UNIQUE (email))"; // if email is not null it must be unique
+                + "id INT AUTO_INCREMENT PRIMARY KEY, "
+                + "userName VARCHAR(255) UNIQUE, "
+                + "password VARCHAR(255), "
+                + "email VARCHAR(255), "
+                + "name VARCHAR(255), "
+                + "roles VARCHAR(255), "
+                + "CONSTRAINT unique_email UNIQUE (email))";
         statement.execute(userTable);
-        
-        // AHHH SO MANY
+
         String approvedReviewersTable = "CREATE TABLE IF NOT EXISTS ApprovedReviewers ("
-            + "ownerUserName VARCHAR(255) NOT NULL, "      // the user who owns this list
-            + "reviewerName VARCHAR(255) NOT NULL, "  // the approved reviewer
-            + "reviewerRating DOUBLE, "
-            + "PRIMARY KEY (ownerUserName, reviewerName))";
+                + "ownerUserName VARCHAR(255) NOT NULL, "
+                + "reviewerName VARCHAR(255) NOT NULL, "
+                + "reviewerRating DOUBLE, "
+                + "PRIMARY KEY (ownerUserName, reviewerName))";
         statement.execute(approvedReviewersTable);
-        
+
         String invitationCodesTable = "CREATE TABLE IF NOT EXISTS InvitationCodes ("
-            + "code VARCHAR(10) PRIMARY KEY, "
-            + "isUsed BOOLEAN DEFAULT FALSE)";
+                + "code VARCHAR(10) PRIMARY KEY, "
+                + "isUsed BOOLEAN DEFAULT FALSE)";
         statement.execute(invitationCodesTable);
-        
+
         String userOTPAccess = "CREATE TABLE IF NOT EXISTS UserOTP ("
-            + "userName VARCHAR(255) UNIQUE, "
-            + "tempPassword VARCHAR(255), "
-            + "isUsed BOOLEAN DEFAULT FALSE)";
+                + "userName VARCHAR(255) UNIQUE, "
+                + "tempPassword VARCHAR(255), "
+                + "isUsed BOOLEAN DEFAULT FALSE)";
         statement.execute(userOTPAccess);
-        
-        // these are self explainitory
+
         String questionsTable = "CREATE TABLE IF NOT EXISTS Questions ("
-            + "id UUID PRIMARY KEY, "
-            + "author VARCHAR(255) NOT NULL, "
-            + "questionTitle CLOB NOT NULL, "
-            + "questionText CLOB NOT NULL, "
-            + "referencedQuestionId UUID, "
-            + "timestamp TIMESTAMP NOT NULL, "
-            + "resolved BOOLEAN DEFAULT FALSE)";
+                + "id UUID PRIMARY KEY, "
+                + "author VARCHAR(255) NOT NULL, "
+                + "questionTitle CLOB NOT NULL, "
+                + "questionText CLOB NOT NULL, "
+                + "referencedQuestionId UUID, "
+                + "timestamp TIMESTAMP NOT NULL, "
+                + "resolved BOOLEAN DEFAULT FALSE)";
         statement.execute(questionsTable);
-        
+
         String answersTable = "CREATE TABLE IF NOT EXISTS Answers ("
                 + "id UUID PRIMARY KEY, "
                 + "questionId UUID NOT NULL, "
@@ -91,8 +93,41 @@ public class DatabaseHelper {
                 + "FOREIGN KEY (questionId) REFERENCES Questions(id), "
                 + "FOREIGN KEY (parentAnswerId) REFERENCES Answers(id))";
         statement.execute(answersTable);
+
+        String reviewerRequestTable = "CREATE TABLE IF NOT EXISTS ReviewerRequests ("
+                + "id UUID PRIMARY KEY, "
+                + "requestUser VARCHAR(255) NOT NULL, "
+                + "isApproved BOOLEAN DEFAULT NULL)";
+        statement.execute(reviewerRequestTable);
+
+        String reviewsTable = "CREATE TABLE IF NOT EXISTS Reviews ("
+                + "id UUID PRIMARY KEY, "
+                + "reviewText CLOB NOT NULL, "
+                + "reviewer VARCHAR(255) NOT NULL, "
+                + "answerId UUID NOT NULL, "
+                + "timestamp TIMESTAMP NOT NULL, "
+                + "privateFeedbackCount INT DEFAULT 0, "
+                + "previousReviewId UUID)";
+        statement.execute(reviewsTable);
+
+        String privateFeedbackTable = "CREATE TABLE IF NOT EXISTS PrivateFeedback ("
+                + "id UUID PRIMARY KEY, "
+                + "fromUser VARCHAR(255) NOT NULL, "
+                + "reviewer VARCHAR(255) NOT NULL, "
+                + "feedback CLOB NOT NULL, "
+                + "timestamp TIMESTAMP NOT NULL)";
+        statement.execute(privateFeedbackTable);
+
+        String privateMessagesTable = "CREATE TABLE IF NOT EXISTS PrivateMessages ("
+                + "id UUID PRIMARY KEY, "
+                + "sender VARCHAR(255) NOT NULL, "
+                + "recipient VARCHAR(255) NOT NULL, "
+                + "subject VARCHAR(255) NOT NULL, "
+                + "message CLOB NOT NULL, "
+                + "timestamp TIMESTAMP NOT NULL)";
+        statement.execute(privateMessagesTable);
     }
-    
+
     public boolean isDatabaseEmpty() throws SQLException {
         String query = "SELECT COUNT(*) AS count FROM cse360users";
         ResultSet resultSet = statement.executeQuery(query);
@@ -170,21 +205,6 @@ public class DatabaseHelper {
             }
         }
         return null;
-    }
-    
-    // adds to user dictionary object converted to table
-    public boolean addApprovedReviewer(String ownerUserName, String reviewerName, double rating) {
-        String query = "INSERT INTO ApprovedReviewers (ownerUserName, reviewerName, reviewerRating) VALUES (?, ?, ?)";
-        try(PreparedStatement pstmt = connection.prepareStatement(query)) {
-            pstmt.setString(1, sanitize(ownerUserName));
-            pstmt.setString(2, sanitize(reviewerName));
-            pstmt.setDouble(3, rating);
-            int rows = pstmt.executeUpdate();
-            return rows > 0;
-        } catch(SQLException e) {
-            e.printStackTrace();
-            return false;
-        }
     }
     
     // updates 
@@ -708,6 +728,268 @@ public class DatabaseHelper {
         }
         return answers;
     }
+    
+    public boolean addReviewerRequest(String username) {
+        String query = "INSERT INTO ReviewerRequests (id, requestUser, isApproved) VALUES (?, ?, ?)";
+        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+            pstmt.setObject(1, UUID.randomUUID());
+            pstmt.setString(2, sanitize(username));
+            pstmt.setNull(3, Types.BOOLEAN);
+            int rows = pstmt.executeUpdate();
+            return rows > 0;
+        } catch(SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean updateReviewerRequest(String username, boolean isApproved) {
+        String query = "UPDATE ReviewerRequests SET isApproved = ? WHERE requestUser = ?"; 
+        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+            pstmt.setBoolean(1, isApproved);
+            pstmt.setString(2, sanitize(username));
+            int rows = pstmt.executeUpdate();
+            return rows > 0;
+        } catch(SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+    
+    public List<ReviewerRequest> getReviewerRequests() {
+        List<ReviewerRequest> list = new ArrayList<>();
+        String query = "SELECT * FROM ReviewerRequests WHERE isApproved IS NULL";
+        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) {
+                UUID id = (UUID) rs.getObject("id");
+                String username = rs.getString("requestUser");
+                Boolean isApproved = (Boolean) rs.getObject("isApproved");
+                list.add(new ReviewerRequest(id, username, isApproved));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+    
+    public boolean insertReview(Review review) {
+        String query = "INSERT INTO Reviews (id, reviewText, reviewer, answerId, timestamp, privateFeedbackCount, previousReviewId) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+            pstmt.setObject(1, review.getId());
+            pstmt.setString(2, review.getReviewText());
+            pstmt.setString(3, review.getReviewer());
+            pstmt.setObject(4, review.getAnswerId());
+            pstmt.setTimestamp(5, Timestamp.valueOf(review.getTimestamp()));
+            pstmt.setInt(6, review.getPrivateFeedbackCount());
+            if (review.getPreviousReviewId() != null) {
+                pstmt.setObject(7, review.getPreviousReviewId());
+            } else {
+                pstmt.setNull(7, Types.OTHER);
+            }
+            int rows = pstmt.executeUpdate();
+            return rows > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean updateReview(Review review) {
+        String query = "UPDATE Reviews SET reviewText = ?, timestamp = ?, privateFeedbackCount = ?, previousReviewId = ? WHERE id = ?";
+        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+            pstmt.setString(1, review.getReviewText());
+            pstmt.setTimestamp(2, Timestamp.valueOf(review.getTimestamp()));
+            pstmt.setInt(3, review.getPrivateFeedbackCount());
+            if (review.getPreviousReviewId() != null) {
+                pstmt.setObject(4, review.getPreviousReviewId());
+            } else {
+                pstmt.setNull(4, Types.OTHER);
+            }
+            pstmt.setObject(5, review.getId());
+            int rows = pstmt.executeUpdate();
+            System.out.println("Rows updated: " + rows);
+            return rows > 0;
+        } catch(SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public Review getReviewById(UUID id) {
+        String query = "SELECT * FROM Reviews WHERE id = ?";
+        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+            pstmt.setObject(1, id);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                String reviewText = rs.getString("reviewText");
+                String reviewer = rs.getString("reviewer");
+                UUID answerId = (UUID) rs.getObject("answerId");
+                Timestamp ts = rs.getTimestamp("timestamp");
+                LocalDateTime timestamp = ts.toLocalDateTime();
+                int feedbackCount = rs.getInt("privateFeedbackCount");
+                UUID previousReviewId = (UUID) rs.getObject("previousReviewId");
+                Review review = new Review(reviewText, reviewer, answerId, previousReviewId);
+                review.setTimestamp(timestamp);
+                review.setPrivateFeedbackCount(feedbackCount);
+                return review;
+            }
+        } catch(SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public List<Review> getReviewsByReviewer(String reviewer) {
+        List<Review> reviewList = new ArrayList<>();
+        String query = "SELECT * FROM Reviews WHERE reviewer = ?";
+        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+            pstmt.setString(1, sanitize(reviewer));
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) {
+                UUID id = (UUID) rs.getObject("id");
+                String reviewText = rs.getString("reviewText");
+                String reviewerName = rs.getString("reviewer");
+                UUID answerId = (UUID) rs.getObject("answerId");
+                Timestamp ts = rs.getTimestamp("timestamp");
+                LocalDateTime timestamp = ts.toLocalDateTime();
+                int feedbackCount = rs.getInt("privateFeedbackCount");
+                UUID previousReviewId = (UUID) rs.getObject("previousReviewId");
+                Review review = new Review(reviewText, reviewerName, answerId, previousReviewId);
+                review.setPrivateFeedbackCount(feedbackCount);
+                reviewList.add(review);
+            }
+        } catch(SQLException e) {
+            e.printStackTrace();
+        }
+        return reviewList;
+    }
+    
+    public List<Review> getAllReviews() {
+        List<Review> reviews = new ArrayList<>();
+        String query = "SELECT * FROM Reviews";
+        try (Statement stmt = connection.createStatement();
+             ResultSet rs = stmt.executeQuery(query)) {
+            while (rs.next()) {
+                UUID id = (UUID) rs.getObject("id");
+                String reviewText = rs.getString("reviewText");
+                String reviewer = rs.getString("reviewer");
+                UUID answerId = (UUID) rs.getObject("answerId");
+                Timestamp ts = rs.getTimestamp("timestamp");
+                LocalDateTime timestamp = ts.toLocalDateTime();
+                int feedbackCount = rs.getInt("privateFeedbackCount");
+                UUID previousReviewId = (UUID) rs.getObject("previousReviewId");
+                Review review = new Review(reviewText, reviewer, answerId, previousReviewId);
+                review.setTimestamp(timestamp);
+                review.setPrivateFeedbackCount(feedbackCount);
+                reviews.add(review);
+            }
+        } catch(SQLException e) {
+            e.printStackTrace();
+        }
+        return reviews;
+    }
+
+    public boolean insertPrivateFeedback(String fromUser, String reviewer, String feedback) {
+        String query = "INSERT INTO PrivateFeedback (id, fromUser, reviewer, feedback, timestamp) VALUES (?, ?, ?, ?, ?)";
+        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+            pstmt.setObject(1, UUID.randomUUID());
+            pstmt.setString(2, sanitize(fromUser));
+            pstmt.setString(3, sanitize(reviewer));
+            pstmt.setString(4, sanitize(feedback));
+            pstmt.setTimestamp(5, Timestamp.valueOf(LocalDateTime.now()));
+            int rows = pstmt.executeUpdate();
+            return rows > 0;
+        } catch(SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+    
+    public boolean addApprovedReviewer(String ownerUserName, String reviewerName, double rating) {
+        if(ownerUserName.equalsIgnoreCase(reviewerName)) {
+            System.err.println("Cannot add yourself as a trusted reviewer.");
+            return false;
+        }
+        Map<String, Double> existing = getApprovedReviewers(ownerUserName);
+        if(existing.containsKey(reviewerName)) {
+            System.err.println("Reviewer already exists in your trusted list.");
+            return false;
+        }
+        String query = "INSERT INTO ApprovedReviewers (ownerUserName, reviewerName, reviewerRating) VALUES (?, ?, ?)";
+        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+            pstmt.setString(1, sanitize(ownerUserName));
+            pstmt.setString(2, sanitize(reviewerName));
+            pstmt.setDouble(3, rating);
+            int rows = pstmt.executeUpdate();
+            return rows > 0;
+        } catch(SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    // get private feedback for a reviewer
+    public List<PrivateFeedback> getPrivateFeedbackForReviewer(String reviewer) {
+        List<PrivateFeedback> list = new ArrayList<>();
+        String query = "SELECT * FROM PrivateFeedback WHERE reviewer = ?";
+        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+            pstmt.setString(1, sanitize(reviewer));
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) {
+                UUID id = (UUID) rs.getObject("id");
+                String fromUser = rs.getString("fromUser");
+                String feedback = rs.getString("feedback");
+                Timestamp ts = rs.getTimestamp("timestamp");
+                LocalDateTime timestamp = ts.toLocalDateTime();
+                list.add(new PrivateFeedback(id, fromUser, reviewer, feedback, timestamp));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+    
+    public boolean insertPrivateMessage(PrivateMessage msg) {
+        String query = "INSERT INTO PrivateMessages (id, sender, recipient, subject, message, timestamp) VALUES (?, ?, ?, ?, ?, ?)";
+        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+            pstmt.setObject(1, msg.getId());
+            pstmt.setString(2, sanitize(msg.getSender()));
+            pstmt.setString(3, sanitize(msg.getRecipient()));
+            pstmt.setString(4, sanitize(msg.getSubject()));
+            pstmt.setString(5, sanitize(msg.getMessage()));
+            pstmt.setTimestamp(6, Timestamp.valueOf(msg.getTimestamp()));
+            int rows = pstmt.executeUpdate();
+            return rows > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    // retrieve all private messages for a given recipient
+    public List<PrivateMessage> getPrivateMessagesForUser(String recipient) {
+        List<PrivateMessage> messages = new ArrayList<>();
+        String query = "SELECT * FROM PrivateMessages WHERE recipient = ?";
+        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+            pstmt.setString(1, sanitize(recipient));
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) {
+                UUID id = (UUID) rs.getObject("id");
+                String sender = rs.getString("sender");
+                String subject = rs.getString("subject");
+                String message = rs.getString("message");
+                Timestamp ts = rs.getTimestamp("timestamp");
+                LocalDateTime timestamp = ts.toLocalDateTime();
+                messages.add(new PrivateMessage(id, sender, recipient, subject, message, timestamp));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return messages;
+    }
+
+    
 
     public void closeConnection() {
         try {

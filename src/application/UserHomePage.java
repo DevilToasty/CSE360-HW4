@@ -23,7 +23,7 @@ public class UserHomePage {
             BorderPane.setAlignment(backButton, Pos.TOP_LEFT);
             borderPane.setTop(backButton);
         }
-
+        
         Label userLabel = new Label("Hello, User!");
         userLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
 

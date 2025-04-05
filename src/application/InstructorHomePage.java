@@ -15,11 +15,13 @@ import javafx.scene.layout.VBox;
 public class InstructorHomePage {
 
     private final DatabaseHelper databaseHelper;
+    private final QuestionManager questionManager;
     private final User currentUser;
 
-    public InstructorHomePage(DatabaseHelper databaseHelper, User currentUser) {
+    public InstructorHomePage(DatabaseHelper databaseHelper, User currentUser, QuestionManager questionManager) {
         this.databaseHelper = databaseHelper;
         this.currentUser = currentUser;
+        this.questionManager = questionManager;
     }
 
     /**
@@ -36,8 +38,13 @@ public class InstructorHomePage {
         borderPane.setTop(backButton);
         Label userLabel = new Label("Hello, Instructor!");
         userLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
+        
+        Button manageButton = new Button("Manage");
+        manageButton.setOnAction(e -> {
+        	new InstructorReviewerManagerPage(databaseHelper, questionManager, currentUser).show(primaryStage);
+        });
 
-        VBox centerBox = new VBox(userLabel);
+        VBox centerBox = new VBox(userLabel, manageButton);
         centerBox.setAlignment(Pos.CENTER);
         borderPane.setCenter(centerBox);
 

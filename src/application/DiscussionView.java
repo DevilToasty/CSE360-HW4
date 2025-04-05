@@ -15,6 +15,7 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 public class DiscussionView {
@@ -179,6 +180,10 @@ public class DiscussionView {
             if (matches) {
                 filtered.add(q);
             }
+            
+            if (trustedReviewersCheckbox.isSelected()) {
+                filtered.sort(Comparator.comparingDouble((Question ql) -> getMaxRatingForQuestion(ql)).reversed());
+            }
         }
         
         // display filtered questions
@@ -190,5 +195,19 @@ public class DiscussionView {
         	});
             questionsContainer.getChildren().add(qView);
         }
+    }
+    
+    private double getMaxRatingForQuestion(Question q) {
+        double maxRating = 0.0;
+        // currentUser.getApprovedReviewers() returns a Map<String, Double>
+        for (Answer a : q.getAnswers()) {
+            if (currentUser.getApprovedReviewers().containsKey(a.getAuthor())) {
+                double rating = currentUser.getApprovedReviewers().get(a.getAuthor());
+                if (rating > maxRating) {
+                    maxRating = rating;
+                }
+            }
+        }
+        return maxRating;
     }
 }

@@ -106,11 +106,11 @@ public class WelcomeLoginPage {
 			} else if (role.contains("Admin")) {
                 new AdminHomePage(databaseHelper).show(primaryStage);
 			} else if (role.contains("Instructor")) {
-                new InstructorHomePage(databaseHelper, user).show(primaryStage);
+                new InstructorHomePage(databaseHelper, user, questionManager).show(primaryStage);
 			} else if (role.contains("Staff")) {
                 new StaffHomePage(databaseHelper, user).show(primaryStage, questionManager);
 			} else if (role.contains("Reviewer")) {
-                new ReviewerHomePage(databaseHelper, user).show(primaryStage);
+                new ReviewerHomePage(databaseHelper, questionManager, user).show(primaryStage);
 			}
         });
 

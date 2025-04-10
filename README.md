@@ -1,52 +1,21 @@
-# Team Project Phase 2: README
-=======
-Overview
-This repository contains all files and deliverables for Team Project Phase 2, building upon our Phase 1 and HW2 implementation. The primary focus of Phase 2 is extending and refining our question-and-answer functionality to include:
+# HW4 BRADLEY BREEN
 
-Advanced searching of questions and answers
-Enhanced UI and discussion views
-Updated CRUD operations for questions and answers
-Additional testing and validation
-You will find source code, documentation, screencasts, and test files demonstrating the new features and the overall progress since Phase 1.
+A List of the Staff Role User Stories You Produced
+User Story 1: When the staff interacts in the posts, their role is displayed by their name.
 
-Repository Contents
+As a staff member, it should be easily discernible that you are a staff member in the discussion when you post and interact with students.
+ 
+User Story 2: They can delete other students' posts and reviews.
 
-**1. Source Code**
-Location: src/ directory (organized into packages such as application, databasePart1, etc.).
+As a staff member, you can delete other posts and reviews if they are inappropriate or harm the learning environment.
 
-Description: Contains all updated Java files for the application, including:
+User Story 3: Flag questions/answers for other staff members to review
+As a staff member, you should be able to mark discussion posts that might need to be reviewed by reviewers or other staff members.
 
-**Key Files:** 
+User Story 4: Marking questions/answers as good/bad
 
-DiscussionView.java – New class for displaying and filtering questions with checkboxes and a search bar.
+As a staff member, you should be able to give feedback on questions and answers as good or bad. If you have staff you should automatically get reviewer.
 
-QuestionManager.java – Extended functionality for creating, searching, and updating questions and answers.
+User Story 5: They can view other students' and reviewers' private messages in the discussion application
 
-DatabaseHelper.java – Updated with additional methods for question and answer retrieval, ensuring smooth data operations.
-
-Existing Phase 1 Classes – All original files from Phase 1, such as UserLoginPage.java, StudentHomePage.java, AdminHomePage.java, etc., have been enhanced to support new features (e.g., UI improvements, updated navigation).
-
-**Key Updates in Phase 2:**
-
-Search Bar Implementation – Allows users to filter questions and answers by keyword.
-Enhanced CRUD Operations – Users can now update questions or answers more easily.
-Discussion View – A centralized page for viewing, creating, and filtering discussions.
-
-**2. Screencasts**
-Location: Screencasts_Scrum_Meetings/ directory (or similarly named folder).
-
-Description: Includes video recordings demonstrating:
-
-1. New Functionalities – Searching, updating questions/answers, and discussion features.
-2. Automated Tests – Evidence of test execution and console output.
-3. Standup Meetings – Summaries of team progress, next steps, and any issues faced.
-
-
-**3. Database Info**
-   If the data is not reset the info would stay the same but if the data is not reset the data will be like
-
-Default Admin Credentials:
-
-Username: Group43
-Password: Abcd123$
-
+As a staff member, you should be able to ensure that the private messages between students and reviewers are safe and appropriate.

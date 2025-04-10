@@ -35,10 +35,15 @@ public class StaffHomePage {
 		       new DiscussionView(databaseHelper, questionManager, currentUser).show(primaryStage);     
 		});
         
+		Button messageViwerButton = new Button("View Class Messages");
+        
+		messageViwerButton.setOnAction(a -> {
+		       new StaffMessageViewer(databaseHelper, currentUser).show(primaryStage);     
+		});
 
         VBox centerBox = new VBox(userLabel);
         centerBox.setAlignment(Pos.CENTER);
-        centerBox.getChildren().add(discussionButton);
+        centerBox.getChildren().addAll(discussionButton, messageViwerButton);
         borderPane.setCenter(centerBox);
 
         Scene scene = new Scene(borderPane, 800, 400);

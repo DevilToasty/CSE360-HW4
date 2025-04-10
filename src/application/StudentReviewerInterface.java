@@ -43,7 +43,6 @@ public class StudentReviewerInterface {
         HBox.setHgrow(centeredPane, Priority.ALWAYS);
         root.setTop(header);
         
-
         TabPane tabPane = new TabPane();
 
         // browse Reviews and add reviewers

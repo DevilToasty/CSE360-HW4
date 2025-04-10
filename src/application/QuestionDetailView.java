@@ -5,16 +5,15 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.geometry.Side;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.ContextMenu;
-import javafx.scene.control.Label;
-import javafx.scene.control.MenuItem;
-import javafx.scene.control.ScrollPane;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
+import javafx.scene.control.*;
+import javafx.scene.layout.*;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
-import javafx.scene.layout.VBox;
+
+import java.sql.SQLException;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
 
 public class QuestionDetailView {
     
@@ -46,20 +45,14 @@ public class QuestionDetailView {
     }
     
     public void show(CustomTrackedStage primaryStage) {
-        
         BorderPane root = new BorderPane();
         root.setPadding(new Insets(20));
        
-        // create header as a VBox containing an HBox for the top row
         VBox header = new VBox(10);
         header.setPadding(new Insets(10));
         
         HBox topRow = new HBox(10);
         topRow.setAlignment(Pos.CENTER_LEFT);
-        
-        HBox secondRow = new HBox(10);
-        secondRow.setAlignment(Pos.CENTER_LEFT);
-        
         Button backButton = BackButton.createBackButton(primaryStage);
         backButton.setOnAction(e -> {
             if (onBack != null) {
@@ -67,92 +60,101 @@ public class QuestionDetailView {
             }
             primaryStage.goBack();
         });
-        
         topRow.getChildren().add(backButton);
         
         Label titleLabel = new Label(question.getTitle());
         titleLabel.setStyle("-fx-font-size: 24px; -fx-font-weight: bold;");
         
+        Label flagIcon = new Label("\u2691");  // Unicode flag symbol
+        flagIcon.setStyle("-fx-text-fill: red; -fx-font-size: 16px;");
+        if (hasPrivilege(currentUser) && databaseHelper.isQuestionFlagged(question.getId())) {
+            titleLabel.setText(question.getTitle() + " ");
+            HBox titleContainer = new HBox(5, titleLabel, flagIcon);
+            titleContainer.setAlignment(Pos.CENTER_LEFT);
+            titleLabel = new Label();
+            titleLabel.setGraphic(titleContainer);
+        }
+        
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
         
-        Button optionsButton = new Button("\u22EE");  // unicode ellipsis
-        optionsButton.setLayoutX(10);
-        optionsButton.setLayoutY(10);
-        // style
+        Button optionsButton = new Button("\u22EE"); 
         optionsButton.setStyle(
-            "-fx-background-color: #e0e0e0; " +
-            "-fx-border-color: #ccc; " +
-            "-fx-border-radius: 5px; " +
-            "-fx-background-radius: 5px; " +
-            "-fx-font-size: 16px; " +
-            "-fx-padding: 5px;"
+            "-fx-background-color: #e0e0e0; -fx-border-color: #ccc; " +
+            "-fx-border-radius: 5px; -fx-background-radius: 5px; " +
+            "-fx-font-size: 16px; -fx-padding: 5px;"
         );
         
-        editQuestionContainer = new VBox();
-
-        // -- MENU --
         ContextMenu contextMenu = new ContextMenu();
-        
-        // if the current user is the question author, add an options button.
-        if (currentUser.getUserName().equals(question.getAuthor())) {
-	        
-        	
-        	// JASON EDIT FUNCTION //
-        	MenuItem editQuestion = new MenuItem("Edit Question");
-	        editQuestion.setOnAction(e -> {
-	        	if (currentUser.getUserName().equals(question.getAuthor())) {
-	                if (editQuestionContainer.getChildren().isEmpty()) {
-	                    EditQuestionBox editBox = new EditQuestionBox(text -> {
-	                        try {
-	                            questionManager.editQuestiontext(question, text);
-	                            refreshContent();
-	                        } catch(Exception ex) {
-	                            ex.printStackTrace();
-	                        }
-	                    });
-	                    editQuestionContainer.getChildren().add(editBox);
-	                } else {
-	                    editQuestionContainer.getChildren().clear();
-	                }
-	            } else {
-	                errorLabel.setText("You aren't the user who posted this question.");
-	            }
-	        });
-	        
-	        MenuItem deleteItem = new MenuItem("Delete Question");
-	        deleteItem.setOnAction(e -> {
-	            boolean success = questionManager.deleteQuestion(question.getId());
-	            if (success) {
-	            	System.out.println();
-	                if (onBack != null) {
-	                    onBack.run(); // refresh discussion view
-	                }
-	                primaryStage.goBack(); // navigate back to discussion page
-	            } else {
-	                errorLabel.setText("Error deleting question.");
-	            }
-	        });
-	       
-	        contextMenu.getItems().addAll(editQuestion, deleteItem);
+        if (currentUser.getUserName().equals(question.getAuthor()) || 
+            hasPrivilege(currentUser)) {
+            
+            MenuItem editQuestion = new MenuItem("Edit Question");
+            editQuestion.setOnAction(e -> {
+                if (currentUser.getUserName().equals(question.getAuthor())) {
+                    if (editQuestionContainer.getChildren().isEmpty()) {
+                        EditQuestionBox editBox = new EditQuestionBox(text -> {
+                            try {
+                                questionManager.editQuestiontext(question, text);
+                                refreshContent();
+                            } catch(Exception ex) {
+                                ex.printStackTrace();
+                            }
+                        });
+                        editQuestionContainer.getChildren().add(editBox);
+                    } else {
+                        editQuestionContainer.getChildren().clear();
+                    }
+                } else {
+                    errorLabel.setText("You aren't the user who posted this question.");
+                }
+            });
+
+            MenuItem deleteItem = new MenuItem("Delete Question");
+            deleteItem.setOnAction(e -> {
+                boolean success = questionManager.deleteQuestion(question.getId());
+                if (success) {
+                    if (onBack != null) {
+                        onBack.run(); // refresh discussion view
+                    }
+                    primaryStage.goBack(); // navigate back to discussion page
+                } else {
+                    errorLabel.setText("Error deleting question.");
+                }
+            });
+            contextMenu.getItems().addAll(editQuestion, deleteItem);
         }
         
-        MenuItem reportItem = new MenuItem("Report");
-        reportItem.setOnAction(e -> {
-            // to do
-        });
+        if (hasPrivilege(currentUser)) {
+            MenuItem flagItem;
+            if (databaseHelper.isQuestionFlagged(question.getId())) {
+                flagItem = new MenuItem("Unflag Question");
+            } else {
+                flagItem = new MenuItem("Flag Question");
+            }
+            flagItem.setOnAction(e -> {
+                boolean success;
+                if (databaseHelper.isQuestionFlagged(question.getId())) {
+                    success = databaseHelper.unflagQuestion(question.getId());
+                } else {
+                    success = databaseHelper.flagQuestion(question.getId(), currentUser.getName());
+                }
+                if (success) {
+                    refreshContent();
+                } else {
+                    errorLabel.setText("Error updating flag status.");
+                }
+            });
+            contextMenu.getItems().add(flagItem);
+        }
         
-        contextMenu.getItems().add(reportItem);
         optionsButton.setOnAction(e -> {
             contextMenu.show(optionsButton, Side.BOTTOM, 0, 0);
         });
         
-        // -- MENU END --
-        
-        
-            
+        HBox secondRow = new HBox(10);
+        secondRow.setAlignment(Pos.CENTER_LEFT);
         secondRow.getChildren().addAll(titleLabel, spacer, optionsButton);
-        
         header.getChildren().addAll(topRow, secondRow);
         
         fullTextLabel = new Label(question.getQuestionText());
@@ -161,8 +163,10 @@ public class QuestionDetailView {
         
         errorLabel = new Label();
         errorLabel.setStyle("-fx-text-fill: red; -fx-font-size: 12px;");
-               
-        questionReplyContainer = new VBox();
+        
+        editQuestionContainer = new VBox(10);
+        questionReplyContainer = new VBox(10);
+        
         Button replyButton = new Button("Reply");
         replyButton.setOnAction(e -> {
             if (questionReplyContainer.getChildren().isEmpty()) {
@@ -204,15 +208,58 @@ public class QuestionDetailView {
         primaryStage.showScene(scene);
     }
     
-    // loads (and refreshes) the list of answers
+    private boolean hasPrivilege(User currentUser2) {
+		if ((currentUser2.getRoles().contains("Admin") 
+				|| currentUser2.getRoles().contains("Instructor") 
+				|| currentUser2.getRoles().contains("Staff") 
+				|| currentUser2.getRoles().contains("Reviewer"))) return true;
+		return false;
+	}
+
     private void loadAnswers() {
         answersContainer.getChildren().clear();
-        for (Answer a : question.getAnswers()) {
+        List<Answer> answerList = question.getAnswers();
+        if (answerList == null) {
+            return;
+        }
+        for (Answer a : answerList) {
+            if (a == null) continue;
             if (a.getParentAnswerId() == null) {
+                User answerAuthor = null;
+                try {
+                    answerAuthor = databaseHelper.getUser(a.getAuthor());
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                }
+                String highestRole = "Student";
+                if (answerAuthor != null && answerAuthor.getRoles() != null) {
+                    highestRole = getHighestRole(answerAuthor.getRoles());
+                }
+                String displayName = highestRole.equalsIgnoreCase("Student")
+                                     ? a.getAuthor()
+                                     : highestRole + " " + a.getAuthor();
+                Label authorLabel = new Label("Posted by: " + displayName);
+                authorLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
+                
                 AnswerView aView = new AnswerView(a, question, questionManager, currentUser, question.getAnswers(), this::refreshContent);
-                answersContainer.getChildren().add(aView);
+                VBox answerBox = new VBox(5, authorLabel, aView);
+                answerBox.setPadding(new Insets(5));
+                answersContainer.getChildren().add(answerBox);
             }
         }
+    }
+    
+    private String getHighestRole(String roles) {
+        String[] roleOrder = {"Admin", "Instructor", "Staff", "Reviewer", "Student"};
+        String[] userRoles = roles.split(",\\s*");
+        for (String r : roleOrder) {
+            for (String ur : userRoles) {
+                if (ur.equalsIgnoreCase(r)) {
+                    return r;
+                }
+            }
+        }
+        return "Student"; 
     }
     
     private void refreshContent() {

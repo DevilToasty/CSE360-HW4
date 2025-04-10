@@ -188,7 +188,7 @@ public class DiscussionView {
         
         // display filtered questions
         for (Question q : filtered) {
-            QuestionView qView = new QuestionView(q);
+            QuestionView qView = new QuestionView(q, databaseHelper, currentUser);
         	qView.setOnMouseClicked(e -> {
         	    new QuestionDetailView(q, questionManager, databaseHelper, currentUser, this::updateQuestionList) // updates page when detail view is closed 
         	        .show(primaryStage);

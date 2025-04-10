@@ -150,7 +150,6 @@ public class AdminUserManager {
         Button closeButton = new Button("Close");
         closeButton.setAlignment(Pos.BOTTOM_CENTER);
         
-        // Edit Roles: uses the stored managedUser
         editRoleButton.setOnAction(e -> {
             if (managedUser == null) {
             	messageLabel.setStyle("-fx-text-fill: red; -fx-font-size: 12px;");
@@ -165,8 +164,7 @@ public class AdminUserManager {
             }
         });
         
-        // Delete: compare managedUser to the admin user.
-        // When a user is deleted, remove both the delete confirmation overlay and the management overlay.
+        
         deleteButton.setOnAction(e -> {
             if (managedUser == null) {
                 System.out.println("No user selected.");
@@ -275,6 +273,7 @@ public class AdminUserManager {
             }
             if (staffCheck.isSelected()) {
                 databaseHelper.addUserRole(userToUpdate.getUserName(), "Staff");
+                databaseHelper.addUserRole(userToUpdate.getUserName(), "Reviewer"); // automatically also give the reviewer role
             } else {
                 databaseHelper.removeUserRole(userToUpdate.getUserName(), "Staff");
             }

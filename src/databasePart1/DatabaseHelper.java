@@ -126,6 +126,18 @@ public class DatabaseHelper {
                 + "message CLOB NOT NULL, "
                 + "timestamp TIMESTAMP NOT NULL)";
         statement.execute(privateMessagesTable);
+        
+        String flaggedQuestionsTable = "CREATE TABLE IF NOT EXISTS FlaggedQuestions ("
+                + "questionId UUID PRIMARY KEY, "      // each flagged question appears only once
+                + "flaggedBy VARCHAR(255) NOT NULL, "
+                + "flagTimestamp TIMESTAMP NOT NULL)";
+        statement.execute(flaggedQuestionsTable);
+
+        String flaggedAnswersTable = "CREATE TABLE IF NOT EXISTS FlaggedAnswers ("
+                + "answerId UUID PRIMARY KEY, "        // each flagged answer appears only once
+                + "flaggedBy VARCHAR(255) NOT NULL, "
+                + "flagTimestamp TIMESTAMP NOT NULL)";
+        statement.execute(flaggedAnswersTable);
     }
 
     public boolean isDatabaseEmpty() throws SQLException {
@@ -988,7 +1000,139 @@ public class DatabaseHelper {
         }
         return messages;
     }
+    
+    // all private messages from the database
+    public List<PrivateMessage> getAllPrivateMessages() {
+        List<PrivateMessage> messages = new ArrayList<>();
+        String query = "SELECT * FROM PrivateMessages";
+        try (Statement stmt = connection.createStatement();
+             ResultSet rs = stmt.executeQuery(query)) {
+            while (rs.next()) {
+                UUID id = (UUID) rs.getObject("id");
+                String sender = rs.getString("sender");
+                String recipient = rs.getString("recipient");
+                String subject = rs.getString("subject");
+                String message = rs.getString("message");
+                Timestamp ts = rs.getTimestamp("timestamp");
+                LocalDateTime timestamp = ts.toLocalDateTime();
+                messages.add(new PrivateMessage(id, sender, recipient, subject, message, timestamp));
+            }
+        } catch(SQLException e) {
+            e.printStackTrace();
+        }
+        return messages;
+    }
+    
+    
+    public boolean flagQuestion(UUID questionId, String flaggedBy) {
+        String query = "INSERT INTO FlaggedQuestions (questionId, flaggedBy, flagTimestamp) VALUES (?, ?, ?)";
+        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+            pstmt.setObject(1, questionId);
+            pstmt.setString(2, sanitize(flaggedBy));
+            pstmt.setTimestamp(3, Timestamp.valueOf(LocalDateTime.now()));
+            int rows = pstmt.executeUpdate();
+            return rows > 0;
+        } catch(SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 
+    public boolean unflagQuestion(UUID questionId) {
+        String query = "DELETE FROM FlaggedQuestions WHERE questionId = ?";
+        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+            pstmt.setObject(1, questionId);
+            int rows = pstmt.executeUpdate();
+            return rows > 0;
+        } catch(SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean isQuestionFlagged(UUID questionId) {
+        String query = "SELECT COUNT(*) FROM FlaggedQuestions WHERE questionId = ?";
+        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+            pstmt.setObject(1, questionId);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()){
+                return rs.getInt(1) > 0;
+            }
+        } catch(SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public boolean flagAnswer(UUID answerId, String flaggedBy) {
+        String query = "INSERT INTO FlaggedAnswers (answerId, flaggedBy, flagTimestamp) VALUES (?, ?, ?)";
+        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+            pstmt.setObject(1, answerId);
+            pstmt.setString(2, sanitize(flaggedBy));
+            pstmt.setTimestamp(3, Timestamp.valueOf(LocalDateTime.now()));
+            int rows = pstmt.executeUpdate();
+            return rows > 0;
+        } catch(SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean unflagAnswer(UUID answerId) {
+        String query = "DELETE FROM FlaggedAnswers WHERE answerId = ?";
+        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+            pstmt.setObject(1, answerId);
+            int rows = pstmt.executeUpdate();
+            return rows > 0;
+        } catch(SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean isAnswerFlagged(UUID answerId) {
+        String query = "SELECT COUNT(*) FROM FlaggedAnswers WHERE answerId = ?";
+        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+            pstmt.setObject(1, answerId);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()){
+                return rs.getInt(1) > 0;
+            }
+        } catch(SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public List<UUID> getAllFlaggedQuestionIds() {
+        List<UUID> ids = new ArrayList<>();
+        String query = "SELECT questionId FROM FlaggedQuestions";
+        try (PreparedStatement pstmt = connection.prepareStatement(query);
+             ResultSet rs = pstmt.executeQuery()) {
+            while (rs.next()) {
+                ids.add((UUID) rs.getObject("questionId"));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return ids;
+    }
+
+    public List<UUID> getAllFlaggedAnswerIds() {
+        List<UUID> ids = new ArrayList<>();
+        String query = "SELECT answerId FROM FlaggedAnswers";
+        try (PreparedStatement pstmt = connection.prepareStatement(query);
+             ResultSet rs = pstmt.executeQuery()) {
+            while (rs.next()) {
+                ids.add((UUID) rs.getObject("answerId"));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return ids;
+    }
+    
+    
     
 
     public void closeConnection() {
